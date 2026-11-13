@@ -9,3 +9,9 @@ jupyter
 nbformat
 nbconvert
 ipykernel
+
+# Streamlit demo app (Task 6)
+streamlit>=1.30
+librosa>=1.0
+soundfile>=0.12
+numba>=0.61

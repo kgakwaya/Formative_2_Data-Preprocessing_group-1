@@ -2,7 +2,7 @@
 
 User identity and product recommendation system: a face check, then a voice check, then a product prediction.
 
-This folder holds **Task 1 (data merge)** and **Task 2 (image collection and processing)**.
+This folder holds **Task 1 (data merge)**, **Task 2 (image collection and processing)**, and the **Streamlit interactive demo** (Task 6).
 
 ## Contents
 
@@ -10,6 +10,13 @@ This folder holds **Task 1 (data merge)** and **Task 2 (image collection and pro
 |---|---|
 | `task1_data_merge.ipynb` | EDA, cleaning, join logic and post-merge checks, feature engineering |
 | `task2_image_processing.ipynb` | face photos: loading, face detection and alignment, augmentation, feature extraction, feature checks |
+| `Gakwaya_Ineza_ketia_formative2_task3_voiceprint.ipynb` | voice data: audio features, voiceprint model training & evaluation |
+| `Formative_2_Data_Merge_v5.ipynb` | product recommendation model: feature engineering, model comparison, final pipeline |
+| `app.py` | **Streamlit demo app** — the full 3-model interactive journey |
+| `src/face_engine.py` | facial recognition engine (YuNet + SFace, used by the app) |
+| `src/voice_engine.py` | voiceprint verification engine (librosa MFCCs, used by the app) |
+| `src/recommender_engine.py` | product recommendation engine (scikit-learn pipeline, used by the app) |
+| `src/image_features.py` | the face pipeline (detect → align → describe), shared with the CLI app |
 | `data/raw/` | `customer_social_profiles.csv`, `customer_transactions.csv` (as provided) |
 | `data/processed/merged_customer_dataset.csv` | merged, engineered dataset for the product model: 117 rows × 29 columns |
 | `data/processed/product_label_map.json` | product category ↔ integer label |
@@ -17,15 +24,18 @@ This folder holds **Task 1 (data merge)** and **Task 2 (image collection and pro
 | `images/augmented/` | 6 augmentations per photo, named `<member>_<expression>_<augmentation>.jpg` |
 | `images/faces/` | the aligned 112×112 face crops the features are computed from |
 | `features/image_features.csv` | 63 rows × 170 columns: metadata, 128-d face embedding, colour and texture histograms |
-| `src/image_features.py` | the face pipeline (detect → align → describe), shared with the CLI app |
+| `audio/` | voice recordings (`.flac`) for each member + an unknown speaker |
+| `verify_voice/voice_model.joblib` | trained voiceprint model |
+| `models/product_recommender.joblib` | trained product recommendation pipeline |
 | `figures/` | every figure from both notebooks, for the report |
 | `docs/system_flow.png` | the system flow diagram |
 
-## Run it
+## Run the Notebooks
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate            # Windows  (macOS/Linux: source .venv/bin/activate)
+source .venv/bin/activate          # macOS/Linux
+# .venv\Scripts\activate           # Windows
 pip install -r requirements.txt
 jupyter notebook
 ```
@@ -33,6 +43,48 @@ jupyter notebook
 Run `task1_data_merge.ipynb`, then `task2_image_processing.ipynb`, top to bottom. On first use, Task 2 downloads two pretrained OpenCV models (YuNet face detector, SFace face embedder; about 39 MB) into `models/`. That folder is git-ignored.
 
 Both notebooks were run end to end with Python 3.13, OpenCV 5.0, pandas 3.1 and scikit-learn 1.9.
+
+## Run the Streamlit Demo App
+
+The Streamlit app (`app.py`) implements the full **3-model interactive journey**:
+
+```
+Start → Facial Recognition → Product Recommendation → Voice Validation → Display Predicted Product
+```
+
+### Prerequisites
+
+Make sure you have already:
+1. Run the notebooks above (or at least have the trained model files in place).
+2. The following model files must exist:
+   - `models/face_detection_yunet_2023mar.onnx` (downloaded automatically by the notebook)
+   - `models/face_recognition_sface_2021dec.onnx` (downloaded automatically by the notebook)
+   - `models/product_recommender.joblib` (created by `Formative_2_Data_Merge_v5.ipynb`)
+   - `verify_voice/voice_model.joblib` (created by the voiceprint notebook)
+   - `features/image_features.csv` (created by `task2_image_processing.ipynb`)
+
+### Install & Launch
+
+```bash
+# Activate your virtual environment
+source .venv/bin/activate          # macOS/Linux
+# .venv\Scripts\activate           # Windows
+
+# Install all dependencies (includes streamlit, librosa, etc.)
+pip install -r requirements.txt
+
+# Launch the Streamlit app
+streamlit run app.py
+```
+
+This opens the app at **http://localhost:8501** in your browser.
+
+### How to Use
+
+1. **Start** — Click **Begin Journey** to enter the flow.
+2. **Facial Recognition** — Choose a demo preset photo (Audric / Ketia / Twariq), use your webcam, or upload an image. The model runs YuNet face detection + SFace embedding matching. If the face is not recognized → **Access Denied**.
+3. **Product Recommendation + Voice Validation** — Once the face passes, the product model runs automatically in the background. Then select or record a voice sample. The voiceprint model checks that the voice matches the authenticated face. If it fails → **Access Denied**.
+4. **Display Predicted Product** — If both biometric gates pass, the predicted product category is revealed with confidence scores, category distributions, the customer profile used, and a **What-If simulator** to experiment with different inputs.
 
 ## For the teammates on Tasks 3–6
 
