@@ -32,20 +32,20 @@ FACE_SAMPLES = [
 ]
 
 VOICE_SAMPLES = {
-    "Audric · Approve": "audio/audric_approve.flac",
-    "Audric · Confirm": "audio/audric_confirm.flac",
-    "Ketia · Approve": "audio/ketia_approve.flac",
-    "Ketia · Confirm": "audio/ketia_confirm.flac",
-    "Twariq · Approve": "audio/twariq_approve.flac",
-    "Twariq · Confirm": "audio/twariq_confirm.flac",
-    "Unknown · Approve": "audio/unknown1_approve.flac",
-    "Unknown · Confirm": "audio/unknown1_confirm.flac",
+    "Audric - Approve": "audio/audric_approve.flac",
+    "Audric - Confirm": "audio/audric_confirm.flac",
+    "Ketia - Approve": "audio/ketia_approve.flac",
+    "Ketia - Confirm": "audio/ketia_confirm.flac",
+    "Twariq - Approve": "audio/twariq_approve.flac",
+    "Twariq - Confirm": "audio/twariq_confirm.flac",
+    "Unknown - Approve": "audio/unknown1_approve.flac",
+    "Unknown - Confirm": "audio/unknown1_confirm.flac",
 }
 
 STEPS = ["Face ID", "Product model", "Voice ID", "Your product"]
 STEP_INDEX = {"start": -1, "face": 0, "recommend": 1, "voice": 2, "result": 4}
 
-st.set_page_config(page_title="Biometric Product Recommender", page_icon="🛡️", layout="centered")
+st.set_page_config(page_title="Biometric Product Recommender", layout="centered")
 
 st.markdown("""
 <style>
@@ -53,11 +53,10 @@ st.markdown("""
 .step { flex: 1; text-align: center; font-size: 0.82rem; font-weight: 600; }
 .step .bar { height: 6px; border-radius: 99px; margin-bottom: 6px; background: rgba(148,163,184,0.3); }
 .step.pending { opacity: 0.55; }
-.step.active .bar { background: #3B82F6; animation: pulse 1.4s ease-in-out infinite; }
+.step.active .bar { background: #3B82F6; }
 .step.done .bar { background: #10B981; }
 .step.failed .bar { background: #EF4444; }
 .step.failed { color: #EF4444; }
-@keyframes pulse { 50% { opacity: 0.45; } }
 
 .card { padding: 1.25rem 1.5rem; border-radius: 14px; margin: 0.75rem 0 1.25rem; color: #1E293B; }
 .card h2, .card h3 { margin: 0 0 0.35rem; color: inherit; padding: 0; }
@@ -66,8 +65,6 @@ st.markdown("""
 .card-locked { background: #FFFBEB; border: 1px solid #FCD34D; color: #78350F; }
 .card-success { background: #ECFDF5; border: 1px solid #6EE7B7; color: #064E3B; }
 .card-product { background: linear-gradient(135deg, #EEF2FF, #F5F3FF); border: 1px solid #C7D2FE; }
-.chip { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 0.78rem; font-weight: 600;
-        background: rgba(16,185,129,0.15); color: #047857; margin-right: 6px; }
 .muted { opacity: 0.75; font-size: 0.92rem; }
 </style>
 """, unsafe_allow_html=True)
@@ -83,7 +80,6 @@ DEFAULTS = {
     "voice_result": None,
     "profile": None,
     "rec": None,
-    "celebrated": False,
     "face_threshold": FACE_THRESHOLD,
     "voice_threshold": VOICE_THRESHOLD,
 }
@@ -142,7 +138,7 @@ def face_details(res):
 def voice_details(res):
     expected = (res["expected_member"] or "").capitalize()
     st.metric("Predicted speaker", res["predicted_member"].capitalize(), f"{res['confidence']:.1%} confidence")
-    st.caption(f"Expected speaker: {expected} · required confidence {res['threshold']:.0%} (red line)")
+    st.caption(f"Expected speaker: {expected}, required confidence {res['threshold']:.0%} (red line)")
     bar_chart(res["probabilities"], "Probability", "Speaker",
               alt.datum.Speaker == expected, res["threshold"])
 
@@ -154,14 +150,14 @@ def render_stepper():
     parts = []
     for i, label in enumerate(STEPS):
         if ss.step == "denied" and i == idx:
-            state, icon = "failed", "✕ "
+            state = "failed"
         elif i < idx:
-            state, icon = "done", "✓ "
+            state = "done"
         elif i == idx:
-            state, icon = "active", ""
+            state = "active"
         else:
-            state, icon = "pending", ""
-        parts.append(f'<div class="step {state}"><div class="bar"></div>{icon}{label}</div>')
+            state = "pending"
+        parts.append(f'<div class="step {state}"><div class="bar"></div>{label}</div>')
     st.markdown(f'<div class="stepper">{"".join(parts)}</div>', unsafe_allow_html=True)
 
 
@@ -174,14 +170,14 @@ def method_picker(key, options):
 # Sidebar
 # ------------------------------------------------------------------------------
 with st.sidebar:
-    st.header("🛡️ System control")
+    st.header("System control")
     st.caption("Registered members: Audric, Ketia, Twariq")
     with st.expander("Security thresholds"):
         st.slider("Face similarity threshold", 0.20, 0.60, step=0.01, key="face_threshold",
                   help="OpenCV's recommended SFace same-person threshold is 0.363.")
         st.slider("Voice confidence threshold", 0.50, 0.95, step=0.05, key="voice_threshold",
                   help="Default 0.70 for the voiceprint model.")
-    st.button("↺ Restart journey", width="stretch", on_click=reset_journey)
+    st.button("Restart journey", width="stretch", on_click=reset_journey)
 
 
 st.title("Biometric Product Recommender")
@@ -194,13 +190,13 @@ render_stepper()
 if ss.step == "start":
     st.markdown("#### Get a personalised product recommendation in three quick steps")
     c1, c2, c3 = st.columns(3)
-    c1.markdown("**1 · 👤 Face check**  \nWe confirm you're a registered member.")
-    c2.markdown("**2 · 🧠 Prediction**  \nOur model picks a product for you.")
-    c3.markdown("**3 · 🎙️ Voice check**  \nSay a phrase to unlock your result.")
+    c1.markdown("**1. Face check**  \nWe confirm you're a registered member.")
+    c2.markdown("**2. Prediction**  \nOur model picks a product for you.")
+    c3.markdown("**3. Voice check**  \nSay a phrase to unlock your result.")
     st.write("")
     st.caption("Failing either biometric check denies access. You get "
                f"{MAX_ATTEMPTS} attempts per check.")
-    if st.button("Get started →", type="primary", width="stretch"):
+    if st.button("Get started", type="primary", width="stretch"):
         go("face")
 
 
@@ -208,7 +204,7 @@ if ss.step == "start":
 # Step 1: Facial recognition
 # ------------------------------------------------------------------------------
 elif ss.step == "face":
-    st.subheader("👤 Step 1 · Verify your face")
+    st.subheader("Step 1: Verify your face")
     st.markdown('<p class="muted">Choose a sample photo, take a selfie, or upload a picture.</p>',
                 unsafe_allow_html=True)
 
@@ -224,7 +220,7 @@ elif ss.step == "face":
             with cols[i % 4]:
                 st.image(thumbnail(path), width="stretch")
                 is_sel = selected == path
-                st.button(("✓ " if is_sel else "") + label, key=f"pick_{path}", width="stretch",
+                st.button(label, key=f"pick_{path}", width="stretch",
                           type="primary" if is_sel else "secondary", on_click=set_face, args=(path, label))
     elif method == "Camera":
         cam = st.camera_input("Look at the camera and take a photo", key="cam")
@@ -245,14 +241,14 @@ elif ss.step == "face":
         pc1, pc2 = st.columns([1, 3], vertical_alignment="center")
         pc1.image(ImageOps.fit(img, (160, 160)))
         pc2.markdown(f"**Selected:** {html.escape(ss.face_input['label'])}")
-        if pc2.button("Verify my face →", type="primary", width="stretch"):
-            with st.status("Verifying your face…", expanded=True) as status:
-                st.write("Detecting face and extracting embedding…")
+        if pc2.button("Verify my face", type="primary", width="stretch"):
+            with st.status("Verifying your face...", expanded=True) as status:
+                st.write("Detecting face and extracting embedding...")
                 res = verify_face(img, threshold=ss.face_threshold)
-                st.write("Comparing against registered members…")
+                st.write("Comparing against registered members...")
                 ss.face_result = res
                 if res["approved"]:
-                    status.update(label=f"Face verified — welcome, {member_name()}!", state="complete")
+                    status.update(label=f"Face verified. Welcome, {member_name()}.", state="complete")
                 else:
                     status.update(label="Face not recognised", state="error")
             time.sleep(TRANSITION_PAUSE)
@@ -267,14 +263,14 @@ elif ss.step == "face":
 # Step 2: Product recommendation model (runs automatically)
 # ------------------------------------------------------------------------------
 elif ss.step == "recommend":
-    st.subheader(f"👋 Welcome back, {member_name()}")
-    with st.status("Running product recommendation model…", expanded=True) as status:
-        st.write("Loading your customer profile…")
+    st.subheader(f"Welcome back, {member_name()}")
+    with st.status("Running product recommendation model...", expanded=True) as status:
+        st.write("Loading your customer profile...")
         ss.profile = get_default_profile(ss.face_result["member"])
-        st.write("Scoring every product category…")
+        st.write("Scoring every product category...")
         ss.rec = recommend_product(ss.profile)
         time.sleep(TRANSITION_PAUSE)
-        status.update(label="Recommendation ready — locked until voice check", state="complete")
+        status.update(label="Recommendation ready. Locked until voice check.", state="complete")
     time.sleep(TRANSITION_PAUSE)
     go("voice")
 
@@ -286,13 +282,13 @@ elif ss.step == "voice":
     name = member_name()
     st.markdown(f"""
     <div class="card card-locked">
-        <span class="chip">✓ Face verified · {html.escape(name)}</span><span class="chip">✓ Prediction ready</span>
-        <h3 style="margin-top:0.6rem">🔒 Your recommendation is ready</h3>
+        <p class="muted">Face verified as {html.escape(name)}. Prediction ready.</p>
+        <h3 style="margin-top:0.4rem">Your recommendation is ready</h3>
         <p>Confirm it's really you with your voice to unlock it.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.subheader("🎙️ Step 3 · Verify your voice")
+    st.subheader("Step 3: Verify your voice")
     st.markdown('Say **"Approve"** or **"Confirm"** clearly.')
 
     def set_voice(src, label):
@@ -323,15 +319,15 @@ elif ss.step == "voice":
     else:
         st.markdown(f"**Selected:** {html.escape(ss.voice_input['label'])}")
         st.audio(ss.voice_input["src"])
-        if st.button("Verify my voice & unlock →", type="primary", width="stretch"):
-            with st.status("Analysing your voiceprint…", expanded=True) as status:
-                st.write("Extracting MFCC features…")
+        if st.button("Verify my voice", type="primary", width="stretch"):
+            with st.status("Analysing your voiceprint...", expanded=True) as status:
+                st.write("Extracting MFCC features...")
                 res = verify_voice(ss.voice_input["src"], expected_member=ss.face_result["member"],
                                    threshold=ss.voice_threshold)
-                st.write(f"Matching against {name}'s voiceprint…")
+                st.write(f"Matching against {name}'s voiceprint...")
                 ss.voice_result = res
                 if res["approved"]:
-                    status.update(label="Voice verified — unlocking your product", state="complete")
+                    status.update(label="Voice verified. Unlocking your product.", state="complete")
                 else:
                     status.update(label="Voice not verified", state="error")
             time.sleep(TRANSITION_PAUSE)
@@ -351,11 +347,10 @@ elif ss.step == "denied":
     left = MAX_ATTEMPTS - ss.attempts[stage]
     what = "Face" if stage == "face" else "Voice"
     attempts_msg = (f"{left} attempt{'s' if left != 1 else ''} remaining" if left > 0
-                    else "Too many failed attempts — this session is locked.")
+                    else "Too many failed attempts. This session is locked.")
 
     st.markdown(f"""
     <div class="card card-denied">
-        <div style="font-size:2.6rem">🚫</div>
         <h2>Access denied</h2>
         <p><strong>{what} verification failed.</strong></p>
         <p>{html.escape(res["denial_reason"] or "")}</p>
@@ -387,21 +382,16 @@ elif ss.step == "denied":
 # Step 4: Display predicted product
 # ------------------------------------------------------------------------------
 elif ss.step == "result":
-    if not ss.celebrated:
-        st.balloons()
-        ss.celebrated = True
-
     name = member_name()
     rec, prof = ss.rec, ss.profile
     meta = rec["metadata"]
 
     st.markdown(f"""
     <div class="card card-success">
-        <strong>✓ Identity confirmed, {html.escape(name)}.</strong>
-        Face {ss.face_result['similarity']:.0%} match · Voice {ss.voice_result['confidence']:.0%} confidence
+        <strong>Identity confirmed, {html.escape(name)}.</strong>
+        Face {ss.face_result['similarity']:.0%} match, voice {ss.voice_result['confidence']:.0%} confidence
     </div>
     <div class="card card-product" style="border-left: 8px solid {meta['color']}">
-        <div style="font-size:3rem">{meta['icon']}</div>
         <div style="color:{meta['color']}; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-size:0.85rem">
             Recommended for you
         </div>
@@ -413,7 +403,7 @@ elif ss.step == "result":
     """, unsafe_allow_html=True)
 
     tab_dist, tab_profile, tab_whatif, tab_auth = st.tabs(
-        ["📊 All categories", "👤 Your profile", "🧪 What-if", "🔐 Verification"])
+        ["All categories", "Your profile", "What-if", "Verification"])
 
     with tab_dist:
         df = pd.DataFrame([{"Category": c, "Probability": p} for c, p in rec["all_probabilities"].items()])
@@ -428,9 +418,9 @@ elif ss.step == "result":
 
     with tab_profile:
         p1, p2, p3 = st.columns(3)
-        p1.metric("Customer ID", prof.get("customer_id", "—"))
-        p2.metric("Platform", prof.get("platform", "—"))
-        p3.metric("Sentiment", prof.get("sentiment", "—"))
+        p1.metric("Customer ID", prof.get("customer_id", "-"))
+        p2.metric("Platform", prof.get("platform", "-"))
+        p3.metric("Sentiment", prof.get("sentiment", "-"))
         p4, p5, p6 = st.columns(3)
         p4.metric("Engagement", f"{prof.get('engagement_mean', 0):.1f}/100")
         p5.metric("Purchase interest", f"{prof.get('interest_mean', 0):.1f}/5")
@@ -452,8 +442,8 @@ elif ss.step == "result":
         sim["prior_avg_amount"] = w2.slider("Prior avg amount ($)", 20.0, 500.0, float(prof.get("prior_avg_amount", 200.0)))
         sim_rec = recommend_product(sim)
         changed = sim_rec["recommended_category"] != rec["recommended_category"]
-        st.info(f"{sim_rec['metadata']['icon']} Simulated: **{sim_rec['recommended_category']}** "
-                f"({sim_rec['confidence']:.1%}){' — changed!' if changed else ''}")
+        st.info(f"Simulated: **{sim_rec['recommended_category']}** "
+                f"({sim_rec['confidence']:.1%}){' (changed)' if changed else ''}")
 
     with tab_auth:
         st.markdown("**Face check**")
